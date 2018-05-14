@@ -1,11 +1,12 @@
 import os
-from local_settings import *
+import datetime
+from . local_settings import *
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', 'localhost:3000', '127.0.0.1']]
+ALLOWED_HOSTS = ['localhost', 'localhost:3000', '127.0.0.1']
 
 
 INSTALLED_APPS = [
@@ -99,6 +100,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_ROOT = os.path.join(BASE_DIR, 'collect')
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+AUTH_USER_MODEL = 'accounts.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
