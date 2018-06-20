@@ -67,10 +67,29 @@ class Question(models.Model):
                 return self.questionsettings.ball
             elif (not ans.answerinput.is_register_dependent == True) and ans.answerinput.true_answer.strip().lower() == answer.lower():
                 return self.questionsettings.ball
-            elif ans.answerinput.is_integer_number == True and int(ans.answerinput.true_answer) == int(answer):
-                return self.questionsettings.ball
-            elif ans.answerinput.is_float_number == True and float(ans.answerinput.true_answer) == float(answer):
-                return self.questionsettings.ball
+            elif ans.answerinput.is_integer_number == True:
+                try:
+                    if int(ans.answerinput.true_answer) == int(answer):
+                        return self.questionsettings.ball
+                    else:
+                        return 0
+                except:
+                    return 0
+            elif ans.answerinput.is_float_number == True:
+                print('Float answer')
+                print(ans.answerinput.true_answer)
+                print(ans.answerinput)
+                print(answer)
+                print(float(ans.answerinput.true_answer))
+                try:
+                    if float(ans.answerinput.true_answer) == float(answer):
+                        return self.questionsettings.ball
+                    else:
+                        return 0
+                except:
+                    return 0
+            else:
+                print (ans.answerinput.is_float_number, '???????????????')
         return 0
 
     def checkOrdering(self, answer_array):

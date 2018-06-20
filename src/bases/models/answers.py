@@ -47,7 +47,7 @@ class AnswerInput(Answer):
     true_answer = models.CharField(_("Правильный ответ"), max_length=100)
     is_register_dependent = models.BooleanField(_("Регистрозависимый текст?"),
                                              default=False)
-    is_integer_number = models.BooleanField(_("Целое число?"), default=False),
+    is_integer_number = models.BooleanField(_("Целое число?"), default=False)
     is_float_number = models.BooleanField(_("Вещественное число?"), default=False,
                help_text=_("Используйте точку вместо запятой"))
 
