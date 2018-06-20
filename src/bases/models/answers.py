@@ -15,6 +15,9 @@ class Answer(models.Model):
         verbose_name_plural = _('Варианты ответов')
         ordering = ('number',)
 
+    def __str__(self):
+        return self.question.text[:20]
+
 
 class AnswerOneAsk(Answer):
     """ Один вариант ответа """
@@ -46,10 +49,10 @@ class AnswerInput(Answer):
     """Ввод ответа"""
     true_answer = models.CharField(_("Правильный ответ"), max_length=100)
     is_register_dependent = models.BooleanField(_("Регистрозависимый текст?"),
-                                             default=False)
+                        default=False)
     is_integer_number = models.BooleanField(_("Целое число?"), default=False)
-    is_float_number = models.BooleanField(_("Вещественное число?"), default=False,
-               help_text=_("Используйте точку вместо запятой"))
+    is_float_number = models.BooleanField(_("Вещественное число?"),
+                        default=False, help_text=_("Используйте точку вместо запятой"))
 
     class Meta:
         verbose_name = _('Ввод ответа')
