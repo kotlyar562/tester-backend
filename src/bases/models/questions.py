@@ -74,13 +74,8 @@ class Question(models.Model):
                     else:
                         return 0
                 except:
-                    return 0
-            elif ans.answerinput.is_float_number == True:
-                print('Float answer')
-                print(ans.answerinput.true_answer)
-                print(ans.answerinput)
-                print(answer)
-                print(float(ans.answerinput.true_answer))
+                    pass
+            elif ans.answerinput.is_float_number:
                 try:
                     if float(ans.answerinput.true_answer) == float(answer):
                         return self.questionsettings.ball
@@ -88,12 +83,10 @@ class Question(models.Model):
                         return 0
                 except:
                     return 0
-            else:
-                print (ans.answerinput.is_float_number, '???????????????')
         return 0
 
     def checkOrdering(self, answer_array):
-        true_answers = [answer.answerordering.order_number for answer in self.answers.all()]
+        true_answers = [answer.answerordering.pk for answer in self.answers.all()]
         if len(true_answers) != len(answer_array):
             return 0
         for i in range(len(true_answers)):
@@ -115,7 +108,6 @@ class Question(models.Model):
             return self.checkOrdering(answer) #answer - array of pk
         else:
             return 0
-
 
 
 class QuestionSettings(models.Model):
