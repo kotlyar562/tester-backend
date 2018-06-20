@@ -1,145 +1,130 @@
 from django.test import TestCase
 from src.accounts.models import User
-from src.bases.models.bases import QuestBase
-from src.bases.models.questions import Question, QuestionSettings
-from src.bases.models.answers import AnswerOneAsk, AnswerManyAsk, AnswerInput, AnswerOrdering
+from src.bases.models import QuestBase, Question, QuestionSettings, AnswerOneAsk, AnswerManyAsk, AnswerInput, AnswerOrdering
 
 
-class QuestionTest(TestCase):
+class OneAnswerTest(TestCase):
+    """ Test for questions with one answer variant"""
 
-    @classmethod
-    def setUpTestData(cls):
+    def setUp(self):
         user = User.objects.create(email="test@test.ru", password="12345678")
         base = QuestBase.objects.create(user=user, title="test base")
-        questionOneAnswer = Question.objects.create(base=base, qtype=0, #1
+        self.questionOneAnswer = Question.objects.create(base=base, qtype=0,
                                     number=1, text="One Answer Quest")
-        QuestionSettings.objects.create(question=questionOneAnswer)
+        QuestionSettings.objects.create(question=self.questionOneAnswer)
+        self.trueAnswer = AnswerOneAsk.objects.create(question=self.questionOneAnswer,
+                                      number=1, text="True Answer", its_true=True)
+        self.wrongAnswer = AnswerOneAsk.objects.create(question=self.questionOneAnswer,
+                                      number=2, text="Wrong Answer", its_true=False)
 
-        questionManyAnswer = Question.objects.create(base=base, qtype=1, #2
-                                    number=2, text="Many Answer Quest")
-        QuestionSettings.objects.create(question=questionManyAnswer)
+    def testCheckOneAnswer(self):
+        self.assertEqual(self.questionOneAnswer.checkQuestion(self.trueAnswer.pk), 1)
+        self.assertEqual(self.questionOneAnswer.checkQuestion(self.wrongAnswer.pk), 0)
+        self.assertEqual(self.questionOneAnswer.checkQuestion(100), 0)
+        self.assertEqual(self.questionOneAnswer.checkQuestion(), 0)
+        self.assertEqual(self.questionOneAnswer.checkQuestion("text"), 0)
 
-        questionInputTextAnswer = Question.objects.create(base=base, qtype=2, #3
-                                    number=3, text="Input Text Answer Quest")
-        QuestionSettings.objects.create(question=questionInputTextAnswer)
 
-        questionInputRegisterTextAnswer = Question.objects.create(base=base, #4
-                                    qtype=2, number=4,
-                                    text="Input Register Text Answer Quest")
-        QuestionSettings.objects.create(question=questionInputRegisterTextAnswer)
+class ManyAnswersTest(TestCase):
 
-        questionInputIntegerAnswer = Question.objects.create(base=base, qtype=2, #5
-                                    number=5, text="Input Integer Answer Quest")
-        QuestionSettings.objects.create(question=questionInputIntegerAnswer)
-
-        questionInputFloatAnswer = Question.objects.create(base=base, qtype=2, #6
-                                    number=6, text="Input Float Answer Quest")
-        QuestionSettings.objects.create(question=questionInputFloatAnswer)
-
-        questionOrderAnswer = Question.objects.create(base=base, qtype=3, #7
-                                    number=7, text="Ordering Answer Quest")
-        QuestionSettings.objects.create(question=questionOrderAnswer)
-
-        AnswerInput.objects.create(question=questionInputTextAnswer, number=1,
-                                   true_answer="Answer1") #1
-        AnswerInput.objects.create(question=questionInputTextAnswer, number=2,
-                                   true_answer="Answer2") #2
-
-        AnswerInput.objects.create(question=questionInputRegisterTextAnswer, number=1,
-                                   true_answer="Answer1",
-                                   is_register_dependent=True) #3
-        AnswerInput.objects.create(question=questionInputRegisterTextAnswer, number=2,
-                                   true_answer="Answer2",
-                                   is_register_dependent=True) #4
-
-        AnswerInput.objects.create(question=questionInputIntegerAnswer, number=1,
-                                   true_answer="23")      #5
-        AnswerInput.objects.create(question=questionInputIntegerAnswer, number=2,
-                                   true_answer="0")      #6
-
-        AnswerInput.objects.create(question=questionInputFloatAnswer, number=1,
-                                   true_answer="2.4",
-                                   is_float_number=True) #7
-        AnswerInput.objects.create(question=questionInputFloatAnswer, number=2,
-                                   true_answer="0",
-                                   is_float_number=True) #8
-        for i in range(6):
-            AnswerOneAsk.objects.create(question=questionOneAnswer, number=i+1,
-                                        text="Answer0"+str(i), its_true=(i==0)) #9
-            AnswerManyAsk.objects.create(question=questionManyAnswer, number=i+1,
-                                         text="Answer1"+str(i), its_true=(i%2==0)) #10
-            AnswerOrdering.objects.create(question=questionOrderAnswer, number=i+1,
-                                        order_number=i+1, text="Answer"+str(i)) #11...
-
-    def testChekOneAnswer(self):
-        print("test check one answer question")
-        question = Question.objects.get(pk=1)
-        self.assertEqual(question.checkQuestion(9), 1)
-        self.assertEqual(question.checkQuestion(4), 0)
-        self.assertEqual(question.checkQuestion(100), 0)
-        self.assertEqual(question.checkQuestion(), 0)
-        self.assertEqual(question.checkQuestion("text"), 0)
+    def setUp(self):
+        user = User.objects.create(email="test@test.ru", password="12345678")
+        base = QuestBase.objects.create(user=user, title="test base")
+        self.questionManyAnswer = Question.objects.create(base=base, qtype=1,
+                                            number=1, text="Many Answer Quest")
+        QuestionSettings.objects.create(question=self.questionManyAnswer)
+        self.trueAnswer1 = AnswerManyAsk.objects.create(question=self.questionManyAnswer,
+                            number=1, text="AnswerMany 1", its_true=True)
+        self.trueAnswer2 = AnswerManyAsk.objects.create(question=self.questionManyAnswer,
+                            number=2, text="AnswerMany 2", its_true=True)
+        self.wrongAnswer = AnswerManyAsk.objects.create(question=self.questionManyAnswer,
+                            number=3, text="AnswerMany 3", its_true=False)
 
     def testCheckManyAnswer(self):
-        print("test check many answer question")
-        question = Question.objects.get(pk=2)
-        self.assertEqual(question.checkQuestion([10, 16, 22]), 1)
-        self.assertEqual(question.checkQuestion([10, 16]), 0.5)
-        self.assertEqual(question.checkQuestion([10, 16, 22, 9]), 0.5)
-        self.assertEqual(question.checkQuestion([10, 16, 22, 100]), 0.5)
-        self.assertEqual(question.checkQuestion([10]), 0)
-        self.assertEqual(question.checkQuestion([]), 0)
-        self.assertEqual(question.checkQuestion([100]), 0)
-        self.assertEqual(question.checkQuestion(["10", "16", "22"]), 0)
-        self.assertEqual(question.checkQuestion(["test1", "test2"]), 0)
+        pk1, pk2, pk3 = self.trueAnswer1.pk, self.trueAnswer2.pk, self.wrongAnswer.pk
+        self.assertEqual(self.questionManyAnswer.checkQuestion([pk1, pk2]), 1)
+        self.assertEqual(self.questionManyAnswer.checkQuestion([pk1]), 0.5)
+        self.assertEqual(self.questionManyAnswer.checkQuestion([pk1, pk2, pk3]), 0.5)
+        self.assertEqual(self.questionManyAnswer.checkQuestion([pk1, pk2, 1000]), 0.5)
+        self.assertEqual(self.questionManyAnswer.checkQuestion([pk3]), 0)
+        self.assertEqual(self.questionManyAnswer.checkQuestion([]), 0)
+        self.assertEqual(self.questionManyAnswer.checkQuestion([1000]), 0)
+        self.assertEqual(self.questionManyAnswer.checkQuestion(["text1", "text2"]), 0)
+
+
+class InputAnswerTest(TestCase):
+
+    def setUp(self):
+        user = User.objects.create(email="test@test.ru", password="12345678")
+        base = QuestBase.objects.create(user=user, title="test base")
+        self.questionInputText = Question.objects.create(base=base, qtype=2,
+                                number=1, text="Input Answer")
+        QuestionSettings.objects.create(question=self.questionInputText)
+        self.answerText = AnswerInput.objects.create(question=self.questionInputText,
+                        true_answer="NoReGisTer", is_register_dependent=False)
+        self.answerRegisterText = AnswerInput.objects.create(question=self.questionInputText,
+                        true_answer="ReGisTer", is_register_dependent=True)
+        self.answerInteger = AnswerInput.objects.create(question=self.questionInputText,
+                        true_answer="123", is_integer_number=True)
+        self.answerFloat = AnswerInput.objects.create(question=self.questionInputText,
+                        true_answer="0.9", is_float_number=True)
 
     def testCheckInputTextAnswer(self):
         print("test input answer question")
-        question = Question.objects.get(pk=3)
-        self.assertEqual(question.checkQuestion("Answer1"), 1)
-        self.assertEqual(question.checkQuestion(" Answer1 "), 1)
-        self.assertEqual(question.checkQuestion("answer1"), 1)
-        self.assertEqual(question.checkQuestion("Answer2"), 1)
-        self.assertEqual(question.checkQuestion(""), 0)
+        self.assertEqual(self.questionInputText.checkQuestion("NoRegister"), 1)
+        self.assertEqual(self.questionInputText.checkQuestion("noregister"), 1)
+        self.assertEqual(self.questionInputText.checkQuestion("NOREGISTER"), 1)
+        self.assertEqual(self.questionInputText.checkQuestion("No Register"), 0)
+        self.assertEqual(self.questionInputText.checkQuestion("WrongAnswer"), 0)
+        self.assertEqual(self.questionInputText.checkQuestion(""), 0)
 
     def testCheckInputRegisterAnswer(self):
         print("test input register dependent answer question")
-        question = Question.objects.get(pk=4)
-        self.assertEqual(question.checkQuestion("Answer1"), 1)
-        self.assertEqual(question.checkQuestion("  Answer2 "), 1)
-        self.assertEqual(question.checkQuestion("answer1"), 0)
-        self.assertEqual(question.checkQuestion("AnsweR2"), 0)
-        self.assertEqual(question.checkQuestion(""), 0)
+        self.assertEqual(self.questionInputText.checkQuestion("ReGisTer"), 1)
+        self.assertEqual(self.questionInputText.checkQuestion("register"), 0)
+        self.assertEqual(self.questionInputText.checkQuestion("REGISTER"), 0)
+        self.assertEqual(self.questionInputText.checkQuestion("Wrong"), 0)
+        self.assertEqual(self.questionInputText.checkQuestion(""), 0)
 
     def testCheckInputIntegerAnswer(self):
         print("test input integer answer question")
-        question = Question.objects.get(pk=5)
-        self.assertEqual(question.checkQuestion("23"), 1)
-        self.assertEqual(question.checkQuestion("0"), 1)
-        self.assertEqual(question.checkQuestion(23), 1)
-        self.assertEqual(question.checkQuestion(0), 1)
-        self.assertEqual(question.checkQuestion(23.1), 0)
-        self.assertEqual(question.checkQuestion(), 0)
-        self.assertEqual(question.checkQuestion("text"), 0)
+        self.assertEqual(self.questionInputText.checkQuestion("123"), 1)
+        self.assertEqual(self.questionInputText.checkQuestion("124"), 0)
+        self.assertEqual(self.questionInputText.checkQuestion(123), 1)
+        self.assertEqual(self.questionInputText.checkQuestion("123.00"), 0)
+        self.assertEqual(self.questionInputText.checkQuestion(), 0)
+        self.assertEqual(self.questionInputText.checkQuestion("text"), 0)
 
     def testCheckInputFloatAnswer(self):
         print("test input float answer question")
-        question = Question.objects.get(pk=6)
-        self.assertEqual(question.checkQuestion(2.4), 1)
-        self.assertEqual(question.checkQuestion(0), 1)
-        self.assertEqual(question.checkQuestion("2.4"), 1)
-        self.assertEqual(question.checkQuestion("0"), 1)
-        self.assertEqual(question.checkQuestion(2.4000), 1)
-        self.assertEqual(question.checkQuestion(0000), 1)
-        self.assertEqual(question.checkQuestion(24), 0)
-        self.assertEqual(question.checkQuestion(), 0)
+        self.assertEqual(self.questionInputText.checkQuestion("0.9"), 1)
+        self.assertEqual(self.questionInputText.checkQuestion(0.9), 1)
+        self.assertEqual(self.questionInputText.checkQuestion("0.9000"), 1)
+        self.assertEqual(self.questionInputText.checkQuestion(0.9000), 1)
+        self.assertEqual(self.questionInputText.checkQuestion(1), 0)
+        self.assertEqual(self.questionInputText.checkQuestion(), 0)
+        self.assertEqual(self.questionInputText.checkQuestion("text"), 0)
+
+
+class OrderAnswerTest(TestCase):
+
+    def setUp(self):
+        user = User.objects.create(email="test@test.ru", password="12345678")
+        base = QuestBase.objects.create(user=user, title="test base")
+        self.questionOrder = Question.objects.create(base=base, qtype=3,
+                                number=1, text="Order Answer")
+        QuestionSettings.objects.create(question=self.questionOrder)
+        self.answer1 = AnswerOrdering.objects.create(question=self.questionOrder,
+                                order_number=1, text="order 1")
+        self.answer2 = AnswerOrdering.objects.create(question=self.questionOrder,
+                                order_number=2, text="order 2")
+        self.answer3 = AnswerOrdering.objects.create(question=self.questionOrder,
+                                order_number=3, text="order 3")
 
     def testCheckOrderAnswer(self):
-        print("test input ordering answer question")
-        question = Question.objects.get(pk=7)
-        self.assertEqual(question.checkQuestion([1, 2, 3, 4, 5, 6]), 1)
-        self.assertEqual(question.checkQuestion(["1", "2", "3", "4", "5", "6"]), 0)
-        self.assertEqual(question.checkQuestion([1, 2, 3, 4, 5]), 0)
-        self.assertEqual(question.checkQuestion([2, 1, 3, 4, 5, 6]), 0)
-        self.assertEqual(question.checkQuestion([1, 2, 3, 4, 5, 10]), 0)
-        self.assertEqual(question.checkQuestion(["text1", 2, 3, 4, 5, 6]), 0)
+        pk1, pk2, pk3 = self.answer1.pk, self.answer2.pk, self.answer3.pk
+        self.assertEqual(self.questionOrder.checkQuestion([pk1, pk2, pk3]), 1)
+        self.assertEqual(self.questionOrder.checkQuestion([pk2, pk1, pk3]), 0)
+        self.assertEqual(self.questionOrder.checkQuestion([pk1, pk2, pk2]), 0)
+        self.assertEqual(self.questionOrder.checkQuestion([pk1, pk2]), 0)
+        self.assertEqual(self.questionOrder.checkQuestion([]), 0)
