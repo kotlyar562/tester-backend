@@ -67,8 +67,10 @@ class BaseFullSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, required=False)
 
     class Meta:
-        model = UserQBase
-        fields = ('base_id', 'title', 'klass', 'discipline', 'description', 'date_create',
-                  'rating', 'copi_count', 'premium', 'copied', 'publik')
+        model = QuestBase
+        fields = ('base_id', 'title', 'klass', 'discipline', 'description',
+                  'date_create', 'date_change', 'rating', 'copi_count',
+                  'premium', 'copied', 'publik', 'questions')
         read_only_fields = ('base_id', 'rating', 'copi_count', 'date_create',
-                            'rating', 'copi_count', 'premium', 'copied', 'questions')
+                            'date_change', 'rating', 'copi_count', 'premium',
+                            'copied', 'questions')
