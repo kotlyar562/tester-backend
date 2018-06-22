@@ -29,30 +29,25 @@ class AnswerOrderingSerializer(serializers.ModelSerializer):
         fields = ('pk', 'number', 'order_number', 'text')
 
 
-class AnswerSerializer(serializers.Serializer):
-    answer = serializers.SerializerMethodField()
-
-    def get_answer(self, obj):
-        if obj.question.qtype == 0:
-            return AnswerOneAskSerializer(obj.answeroneask).data
-        elif obj.question.qtype == 1:
-            return AnswerManyAskSerializer(obj.answermanyask).data
-        elif obj.question.qtype == 2:
-            return AnswerInputSerializer(obj.answerinput).data
-        elif obj.question.qtype == 3:
-            return AnswerOrderingSerializer(obj.answerordering).data
-
-
 class QuestionSerializer(serializers.ModelSerializer):
     """Вопрос вместе с вариантами ответов, которые отличаются в зависимости от типа вопроса"""
 
-    answers = AnswerSerializer(many=True, required=False)
+    answers = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
         fields = ('pk', 'group', 'qtype', 'number', 'text', 'help_text', 'answers')
         read_only_fields = ('pk', 'answers')
 
+    def get_answers(self, obj):
+        if obj.qtype == 0:
+            return AnswerOneAskSerializer(obj.getAnswers(), many=True).data
+        elif obj.qtype == 1:
+            return AnswerManyAskSerializer(obj.getAnswers(), many=True).data
+        elif obj.qtype == 2:
+            return AnswerInputSerializer(obj.getAnswers(), many=True).data
+        elif obj.qtype == 3:
+            return AnswerOrderingSerializer(obj.getAnswers(), many=True).data
 
 class BaseShortInfoSerializer(serializers.ModelSerializer):
     class Meta:
