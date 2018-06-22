@@ -128,3 +128,23 @@ class AnswersApiTest(TestCase):
                           content_type='application/json')
         self.assertEqual(respPost.status_code, 201)
         self.assertEqual(respPost.data['text'], 'New Answer')
+
+    def testGetPatchDeleteAnswer(self):
+        user = User.objects.get(email='test1@test.ru')
+        c = Client()
+        c.force_login(user)
+        respGet = c.get('/api/v1/bases/%s/questions/%s/answers/%s/' %
+            (str(self.base.base_id), str(self.question.pk), str(self.answer1.pk)))
+        self.assertEqual(respGet.status_code, 200)
+        serializer = AnswerOneAskSerializer(self.answer1)
+        self.assertEqual(serializer.data, respGet.data)
+        respPatch = c.patch(
+            '/api/v1/bases/%s/questions/%s/answers/%s/' % (str(self.base.base_id), str(self.question.pk), str(self.answer1.pk)),
+            data=json.dumps({'text': 'New Text'}),
+            content_type='application/json'
+            )
+        self.assertEqual(respPatch.status_code, 200)
+        self.assertEqual(respPatch.data['text'], 'New Text')
+        respDelete = c.delete('/api/v1/bases/%s/questions/%s/answers/%s/' %
+            (str(self.base.base_id), str(self.question.pk), str(self.answer1.pk)))
+        self.assertEqual(respDelete.status_code, 204)

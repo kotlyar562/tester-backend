@@ -120,13 +120,17 @@ class BaseQuestionView(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-# def getAnswersSerializerByTypes(quest):
-#     if quest.qtype == 0:
-#         answers = [answer.answeroneask for answer in quest.answers.all()]
-#         serializer = AnswerOneAskSerializer(answers, many=True)
-#     elif quest.qtype == 1:
-#         answers = [answer.answermanyask for answer in quest.answers.all()]
-#         serializer = AnswerOneAskSerializer(answers, many=True)
+def getAnswerClassByQtype(qtype):
+    if qtype == 0:
+        return AnswerOneAsk
+    elif qtype == 1:
+        return AnswerManyAsk
+    elif qtype == 2:
+        return AnswerInput
+    elif qtype == 3:
+        return AnswerOrdering
+    else:
+        return None
 
 def getAnswerSerializerByQtype(qtype):
     if qtype == 0:
@@ -136,7 +140,7 @@ def getAnswerSerializerByQtype(qtype):
     elif qtype == 2:
         return AnswerInputSerializer
     elif qtype == 3:
-        return AnswerOrdering
+        return AnswerOrderingSerializer
     else:
         return None
 
@@ -146,27 +150,8 @@ def create_answer(quest, answer):
     if serializer.is_valid():
         serializer.save(question=quest)
         return serializer.data
-    # if quest.qtype == 0:
-    #     serializer = AnswerOneAskSerializer(data=answer)
-    #     if serializer.is_valid():
-    #         serializer.save(question=quest)
-    #         return serializer.data
-    # elif quest.qtype == 1:
-    #     serializer = AnswerManyAskSerializer(data=answer)
-    #     if serializer.is_valid():
-    #         serializer.save(question=quest)
-    #         return serializer.data
-    # elif quest.qtype == 2:
-    #     serializer = AnswerInputSerializer(data=answer)
-    #     if serializer.is_valid():
-    #         serializer.save(question=quest)
-    #         return serializer.data
-    # elif quest.qtype == 3:
-    #     serializer = AnswerOrderingSerializer(data=answer)
-    #     if serializer.is_valid():
-    #         serializer.save(question=quest)
-    #         return serializer.data
     return None
+
 
 class QuestAnswers(generics.ListCreateAPIView):
     """ Просмотр и создание вариантов ответов для данного вопроса """
@@ -186,11 +171,46 @@ class QuestAnswers(generics.ListCreateAPIView):
     def post(self, request, base_id, quest_pk, *args, **kwargs):
         base = get_object_or_404(QuestBase, base_id=base_id)
         quest = get_object_or_404(Question, pk=quest_pk)
-        print (request.data)
         if base.user == request.user and quest.base == base:
-            print (request.data)
             newAnswerData = create_answer(quest, request.data)
-            print (newAnswerData)
             if newAnswerData:
                 return Response(newAnswerData, status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class QuestAnswerView(generics.RetrieveUpdateDestroyAPIView):
+    """ Просмотр, изменение и удаление конкретного варианта ответа """
+    queryset = Answer.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AnswerOneAskSerializer
+
+    def get(self, request, base_id, quest_pk, answer_pk, *args, **kwargs):
+        quest = get_object_or_404(Question, pk=quest_pk)
+        answerClass = getAnswerClassByQtype(quest.qtype)
+        answer = get_object_or_404(answerClass, pk=answer_pk)
+        if answer.question.base.user == request.user:
+            serializerClass = getAnswerSerializerByQtype(quest.qtype)
+            serializer = serializerClass(answer)
+            return Response(serializer.data)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, base_id, quest_pk, answer_pk, *args, **kwargs):
+        quest = get_object_or_404(Question, pk=quest_pk)
+        answerClass = getAnswerClassByQtype(quest.qtype)
+        answer = get_object_or_404(answerClass, pk=answer_pk)
+        if answer.question.base.user == request.user:
+            serializerClass = getAnswerSerializerByQtype(quest.qtype)
+            serializer = serializerClass(instance=answer, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, base_id, quest_pk, answer_pk, *args, **kwargs):
+        quest = get_object_or_404(Question, pk=quest_pk)
+        answerClass = getAnswerClassByQtype(quest.qtype)
+        answer = get_object_or_404(answerClass, pk=answer_pk)
+        if answer.question.base.user == request.user:
+            answer.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
