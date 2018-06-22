@@ -1,9 +1,10 @@
 import json
 from django.test import TestCase
 from src.accounts.models import User
-from src.bases.models import QuestBase, Question
+from src.bases.models import QuestBase, Question, AnswerOneAsk
 from django.test import Client
-from .. serializers.bases_serializer import BaseShortInfoSerializer, BaseFullSerializer, QuestionSerializer
+from .. serializers.bases_serializer import BaseShortInfoSerializer, BaseFullSerializer, \
+    QuestionSerializer, AnswerOneAskSerializer
 
 class BasesApiTest(TestCase):
 
@@ -99,3 +100,31 @@ class QuestionsApiTest(TestCase):
         self.assertEqual(respPatch.data['qtype'], 1)
         respDelete = c.delete('/api/v1/bases/%s/questions/%s/' % (str(self.base.base_id), str(self.quest0.pk)))
         self.assertEqual(respDelete.status_code, 204)
+
+
+class AnswersApiTest(TestCase):
+
+    def setUp(self):
+        user = User.objects.create(email='test1@test.ru', password='12345678')
+        user.is_active = True
+        user.save()
+        self.base = QuestBase.objects.create(title='Test Base', user=user)
+        self.question = Question.objects.create(base=self.base, text="Qustion Text")
+        self.answer1 = AnswerOneAsk.objects.create(question=self.question, text="Answer 1",
+                                                   its_true=True)
+        self.answer2 = AnswerOneAsk.objects.create(question=self.question, text="Answer 2",
+                                                   its_true=False)
+
+    def testGetPostAnswers(self):
+        user = User.objects.get(email='test1@test.ru')
+        c = Client()
+        c.force_login(user)
+        respGet = c.get('/api/v1/bases/%s/questions/%s/answers/' % (str(self.base.base_id), str(self.question.pk)))
+        self.assertEqual(respGet.status_code, 200)
+        serializer = AnswerOneAskSerializer(self.question.getAnswers(), many=True)
+        self.assertEqual(serializer.data, respGet.data)
+        respPost = c.post('/api/v1/bases/%s/questions/%s/answers/' % (str(self.base.base_id), str(self.question.pk)),
+                          data=json.dumps({"text": "New Answer", "its_true": False}),
+                          content_type='application/json')
+        self.assertEqual(respPost.status_code, 201)
+        self.assertEqual(respPost.data['text'], 'New Answer')
