@@ -3,6 +3,19 @@ from src.accounts.models import User
 from src.bases.models import QuestBase, Question, QuestionSettings, AnswerOneAsk, AnswerManyAsk, AnswerInput, AnswerOrdering
 
 
+class GetAnswersTest(TestCase):
+
+    def setUp(self):
+        user = User.objects.create(email="test@test.ru", password="12345678")
+        base = QuestBase.objects.create(user=user, title="test base")
+        self.question = Question.objects.create(base=base, qtype=0, text="Text")
+        AnswerOneAsk.objects.create(question=self.question, text="Answer 1", its_true=False)
+        AnswerOneAsk.objects.create(question=self.question, text="Answer 2", its_true=True)
+
+    def testGetAnswerFunction(self):
+        answers = AnswerOneAsk.objects.filter(question=self.question)
+        self.assertEqual(list(answers), self.question.getAnswers())
+
 class OneAnswerTest(TestCase):
     """ Test for questions with one answer variant"""
 

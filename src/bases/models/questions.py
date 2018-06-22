@@ -109,6 +109,17 @@ class Question(models.Model):
         else:
             return 0
 
+    def getAnswers(self):
+        answers = self.answers.all()
+        if self.qtype == 0:
+            return [answer.answeroneask for answer in answers]
+        if self.qtype == 1:
+            return [answer.answermanyask for answer in answers]
+        if self.qtype == 0:
+            return [answer.answerinput for answer in answers]
+        if self.qtype == 0:
+            return [answer.answerordering for answer in answers]
+
 
 class QuestionSettings(models.Model):
     question = models.OneToOneField(Question, verbose_name=_('Вопрос'),
